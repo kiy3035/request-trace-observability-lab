@@ -23,6 +23,8 @@ Windows에서는 `./gradlew` 대신 `gradlew.bat`을 사용할 수 있습니다.
 - Loki: <http://localhost:3100/ready>
 - Alloy: <http://localhost:12345>
 
+Grafana의 `Observability Lab / Request Trace Troubleshooting` Dashboard에는 요청·Error·Slow Request·Slow SQL 건수, 최근 Error, 느린 요청/SQL TOP 10, traceId 직접 검색과 시간순 Flow가 프로비저닝됩니다.
+
 ```bash
 curl -i -X POST http://localhost:8080/api/orders \
   -H "Content-Type: application/json" \
