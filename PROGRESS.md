@@ -17,7 +17,7 @@ Codex 작업이 끝날 때마다 이 파일을 갱신한다.
 
 ## 현재 단계
 
-Phase 6 - JSON Log + Alloy + Loki + Grafana
+Phase 7 - Grafana Troubleshooting Dashboard
 
 상태: PASS
 
@@ -364,6 +364,64 @@ Blocker:
 다음 권장 단계:
 
 - Phase 7 - Grafana Troubleshooting Dashboard
+
+---
+
+### Phase 7 - Grafana Troubleshooting Dashboard
+
+상태: PASS
+
+목표:
+
+Loki 로그만으로 운영 Troubleshooting Dashboard 구성
+
+변경 파일:
+
+- `docker/grafana/provisioning/dashboards/dashboards.yaml`
+- `docker/grafana/provisioning/dashboards/json/request-trace-troubleshooting.json`
+- `README.md`
+
+실행한 명령:
+
+```powershell
+ConvertFrom-Json으로 Dashboard JSON 검증
+docker compose config --quiet
+docker compose -p request-trace-phase6-check restart grafana
+Invoke-RestMethod /api/dashboards/uid/request-trace-troubleshooting
+Invoke-RestMethod /loki/api/v1/query 로 6개 Dashboard LogQL 실행
+.\gradlew.bat --no-daemon clean build
+```
+
+검증:
+
+- build: PASS (`BUILD SUCCESSFUL`)
+- tests: PASS (전체 25 tests, failures 0)
+- dashboard provisioning: PASS (folder `Observability Lab`, uid `request-trace-troubleshooting`)
+- panel count: 8
+- template variables: 3 (`application`, `environment`, `traceId`)
+- Dashboard LogQL: PASS (6개 지표/TOP query 모두 Loki API 실행 성공)
+
+실제 관측 결과:
+
+- 전체 요청 count query: vector 1 series
+- Error count query: vector 1 series
+- Slow Request count query: vector 0 series (재기동 후 30분 범위에 Slow Request 없음)
+- Slow SQL count query: vector 1 series
+- 느린 요청 TOP query: vector 10 series
+- 느린 SQL TOP query: vector 4 series
+- 제공 화면: 전체 HTTP 요청, Error, Slow Request, Slow SQL, 최근 Error+traceId, 요청 TOP 10, SQL TOP 10, traceId 입력, 선택 trace 시간순 Flow
+
+비고:
+
+- TOP 목록의 traceId/uri/sql은 `| json` 이후 query-time label로만 사용하며 Loki 저장 Label로 승격하지 않는다.
+
+Blocker:
+
+- 없음
+
+다음 권장 단계:
+
+- Phase 8 - 문서화 및 실험 결과 정리
 
 ---
 
