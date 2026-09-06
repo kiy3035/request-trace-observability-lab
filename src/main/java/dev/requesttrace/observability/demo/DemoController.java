@@ -26,6 +26,13 @@ public class DemoController {
         return new DelayResponse(demoService.slowService(delayMs));
     }
 
+    @GetMapping("/slow-sql")
+    public DelayResponse slowSql(
+            @RequestParam(defaultValue = "300") @Min(0) @Max(5000) long delayMs
+    ) {
+        return new DelayResponse(demoService.slowSql(delayMs));
+    }
+
     public record DelayResponse(long requestedDelayMs) {
     }
 }

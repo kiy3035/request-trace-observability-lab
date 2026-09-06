@@ -18,4 +18,5 @@ observability:
   slow:
     http-ms: ${SLOW_HTTP_MS:500}
     service-ms: ${SLOW_SERVICE_MS:500}
+    sql-ms: ${SLOW_SQL_MS:200}
 

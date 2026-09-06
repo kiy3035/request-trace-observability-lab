@@ -21,7 +21,7 @@ class ExecutionTimingAspectTest {
 
     @Test
     void measuresSlowServiceAndEmitsSlowEvent() throws Throwable {
-        ExecutionTimingAspect aspect = new ExecutionTimingAspect(new SlowThresholdProperties(500, 5));
+        ExecutionTimingAspect aspect = new ExecutionTimingAspect(new SlowThresholdProperties(500, 5, 200));
         ProceedingJoinPoint joinPoint = joinPoint("slowService");
         when(joinPoint.proceed()).thenAnswer(invocation -> {
             Thread.sleep(20);
@@ -41,7 +41,7 @@ class ExecutionTimingAspectTest {
 
     @Test
     void measuresControllerWithoutSlowServiceEvent() throws Throwable {
-        ExecutionTimingAspect aspect = new ExecutionTimingAspect(new SlowThresholdProperties(500, 500));
+        ExecutionTimingAspect aspect = new ExecutionTimingAspect(new SlowThresholdProperties(500, 500, 200));
         ProceedingJoinPoint joinPoint = joinPoint("get");
         when(joinPoint.proceed()).thenReturn("done");
 
@@ -53,7 +53,7 @@ class ExecutionTimingAspectTest {
 
     @Test
     void rethrowsOriginalFailureAndRecordsIt() throws Throwable {
-        ExecutionTimingAspect aspect = new ExecutionTimingAspect(new SlowThresholdProperties(500, 500));
+        ExecutionTimingAspect aspect = new ExecutionTimingAspect(new SlowThresholdProperties(500, 500, 200));
         ProceedingJoinPoint joinPoint = joinPoint("get");
         IllegalStateException expected = new IllegalStateException("expected");
         when(joinPoint.proceed()).thenThrow(expected);

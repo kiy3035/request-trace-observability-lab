@@ -44,6 +44,12 @@ Controller와 Service 실행시간은 AOP가 기록합니다. 기본 Slow HTTP/S
 curl -i "http://localhost:8080/api/demo/slow-service?delayMs=700"
 ```
 
+실제 JDBC 실행시간은 `datasource-proxy`가 측정합니다. 기본 Slow SQL 기준은 200ms이며 `SLOW_SQL_MS`로 변경할 수 있습니다. SQL은 공백을 정규화하고 최대 2,000자로 제한하며 Bind Parameter 값은 출력하지 않습니다.
+
+```bash
+curl -i "http://localhost:8080/api/demo/slow-sql?delayMs=300"
+```
+
 ## 테스트
 
 통합 테스트는 Testcontainers로 실제 PostgreSQL 컨테이너를 실행합니다.
