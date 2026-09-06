@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Validated
 @RestController
@@ -14,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class DemoController {
 
     private final DemoService demoService;
+    private final AsyncDemoService asyncDemoService;
 
-    public DemoController(DemoService demoService) {
+    public DemoController(DemoService demoService, AsyncDemoService asyncDemoService) {
         this.demoService = demoService;
+        this.asyncDemoService = asyncDemoService;
     }
 
     @GetMapping("/slow-service")
@@ -31,6 +34,16 @@ public class DemoController {
             @RequestParam(defaultValue = "300") @Min(0) @Max(5000) long delayMs
     ) {
         return new DelayResponse(demoService.slowSql(delayMs));
+    }
+
+    @PostMapping("/async/lost")
+    public AsyncDemoService.AsyncTraceResponse asyncLost() {
+        return asyncDemoService.lost().join();
+    }
+
+    @PostMapping("/async/propagated")
+    public AsyncDemoService.AsyncTraceResponse asyncPropagated() {
+        return asyncDemoService.propagated().join();
     }
 
     public record DelayResponse(long requestedDelayMs) {

@@ -17,7 +17,7 @@ Codex 작업이 끝날 때마다 이 파일을 갱신한다.
 
 ## 현재 단계
 
-Phase 4 - JPA/JDBC SQL 실행시간 측정
+Phase 5 - Async MDC 유실 및 해결
 
 상태: PASS
 
@@ -243,6 +243,62 @@ Blocker:
 다음 권장 단계:
 
 - Phase 5 - Async MDC 유실 및 해결
+
+---
+
+### Phase 5 - Async MDC 유실 및 해결
+
+상태: PASS
+
+목표:
+
+Thread Pool 전환 시 MDC 유실을 재현하고 TaskDecorator로 안전하게 전파
+
+변경 파일:
+
+- `AsyncExecutorConfiguration.java`
+- `MdcTaskDecorator.java`, `MdcTaskDecoratorTest.java`
+- `AsyncDemoService.java`, `AsyncDemoServiceTest.java`
+- `DemoController.java`, `README.md`
+
+실행한 명령:
+
+```powershell
+.\gradlew.bat --no-daemon test --tests dev.requesttrace.observability.config.MdcTaskDecoratorTest --tests dev.requesttrace.observability.demo.AsyncDemoServiceTest
+.\gradlew.bat --no-daemon clean build
+docker compose -p request-trace-phase5-check up -d --wait postgres
+java -jar build\libs\request-trace-observability-lab-0.0.1-SNAPSHOT.jar
+Invoke-WebRequest -Method POST /api/demo/async/lost
+Invoke-WebRequest -Method POST /api/demo/async/propagated
+docker compose -p request-trace-phase5-check down -v --remove-orphans
+```
+
+검증:
+
+- build: PASS (`BUILD SUCCESSFUL`)
+- tests: PASS (전체 24 tests, failures 0)
+- runtime scenario: PASS (MDC 유실/전파 응답과 worker 로그 확인)
+
+실제 관측 결과:
+
+- lost caller traceId: `11111111-1111-4111-8111-111111111111`
+- lost worker traceId: `null`, thread `async-no-mdc-1`
+- propagated caller/worker traceId: `22222222-2222-4222-8222-222222222222`
+- propagated worker thread: `async-mdc-1`
+- event: 두 경로 모두 `ASYNC_CALLER`, `ASYNC_WORKER`
+- Grafana/Loki 확인: NOT RUN (Phase 6 범위)
+
+비고:
+
+- TaskDecorator는 실행 후 worker의 기존 MDC를 복원하며, 기존 값이 없으면 비운다. 두 동작 모두 테스트했다.
+
+Blocker:
+
+- 없음
+
+다음 권장 단계:
+
+- Phase 6 - JSON Log + Alloy + Loki + Grafana
 
 ---
 
