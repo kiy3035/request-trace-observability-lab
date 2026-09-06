@@ -50,6 +50,13 @@ curl -i "http://localhost:8080/api/demo/slow-service?delayMs=700"
 curl -i "http://localhost:8080/api/demo/slow-sql?delayMs=300"
 ```
 
+MDC가 일반 Thread Pool에서 유실되는 경우와 `TaskDecorator`로 전파되는 경우를 비교합니다. 응답의 `callerTraceId`, `workerTraceId`, `workerThread`로 차이를 바로 확인할 수 있습니다.
+
+```bash
+curl -i -X POST http://localhost:8080/api/demo/async/lost
+curl -i -X POST http://localhost:8080/api/demo/async/propagated
+```
+
 ## 테스트
 
 통합 테스트는 Testcontainers로 실제 PostgreSQL 컨테이너를 실행합니다.
