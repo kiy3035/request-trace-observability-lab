@@ -14,6 +14,13 @@ spring:
         jdbc:
           time_zone: UTC
 
+app:
+  environment: ${APP_ENV:local}
+
+logging:
+  file:
+    name: ${LOG_FILE:logs/application.json}
+
 observability:
   slow:
     http-ms: ${SLOW_HTTP_MS:500}

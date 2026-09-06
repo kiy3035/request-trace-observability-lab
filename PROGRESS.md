@@ -17,7 +17,7 @@ Codex 작업이 끝날 때마다 이 파일을 갱신한다.
 
 ## 현재 단계
 
-Phase 5 - Async MDC 유실 및 해결
+Phase 6 - JSON Log + Alloy + Loki + Grafana
 
 상태: PASS
 
@@ -299,6 +299,71 @@ Blocker:
 다음 권장 단계:
 
 - Phase 6 - JSON Log + Alloy + Loki + Grafana
+
+---
+
+### Phase 6 - JSON Log + Alloy + Loki + Grafana
+
+상태: PASS
+
+목표:
+
+JSON 로그 파일을 Alloy로 수집해 Loki에 저장하고 Grafana Datasource로 조회
+
+변경 파일:
+
+- `logback-spring.xml`, `application.yml`
+- `Dockerfile`, `.dockerignore`, `compose.yaml`
+- `docker/alloy/config.alloy`
+- `docker/loki/loki-config.yaml`
+- `docker/grafana/provisioning/datasources/loki.yaml`
+- Error Demo 및 `APPLICATION_ERROR` 처리
+- `build.gradle`, `README.md`, `OrderApiIntegrationTest.java`
+
+실행한 명령:
+
+```powershell
+.\gradlew.bat --no-daemon clean build
+.\gradlew.bat --no-daemon bootJar
+docker compose config --quiet
+docker compose -p request-trace-phase6-check up -d --build --wait
+Invoke-WebRequest로 Order 생성, Slow SQL, Error 호출
+Invoke-RestMethod로 Loki query_range/labels 및 Grafana Datasource health 호출
+```
+
+검증:
+
+- build: PASS (`BUILD SUCCESSFUL`)
+- tests: PASS (전체 25 tests, failures 0)
+- compose config: PASS
+- runtime scenario: PASS (app/postgres/alloy/loki/grafana 모두 healthy)
+- Loki ingestion/query: PASS
+- Grafana datasource: PASS (`status=OK`)
+
+실제 관측 결과:
+
+- 정상 요청 traceId: `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`
+- 정상 Flow: `REQUEST_START → SQL_EXECUTION(3ms) → SERVICE_END(68ms) → CONTROLLER_END(140ms) → REQUEST_END(188ms, HTTP 201)`
+- Slow SQL traceId: `77777777-7777-4777-8777-777777777777`, `SLOW_SQL`, 301ms, `slow=true`
+- Error traceId: `88888888-8888-4888-8888-888888888888`, `APPLICATION_ERROR`, `IntentionalDemoException`, HTTP 500
+- JSON `environment` 필드 중복 수: 1
+- Loki Labels: `application`, `environment`, `level`
+- traceId Label: 없음
+- Grafana: database `ok`, version `13.2.0`, Loki Datasource `OK`
+
+비고:
+
+- 최초 이미지 다운로드가 중단되며 전용 Compose 컨테이너 이름 충돌이 발생했다. `request-trace-phase6-check` 리소스만 정리한 뒤 재기동했다.
+- 최초 정상 POST 한 건은 Windows 호스트 연결 reset으로 실패했으며 새 traceId로 재실행해 HTTP 201과 Loki Flow를 확인했다.
+- Alloy의 `filename` Label은 drop하고 Loki의 자동 `service_name` 발견은 비활성화했다.
+
+Blocker:
+
+- 없음
+
+다음 권장 단계:
+
+- Phase 7 - Grafana Troubleshooting Dashboard
 
 ---
 

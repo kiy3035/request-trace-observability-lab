@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(OrderNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(
@@ -32,6 +36,28 @@ public class GlobalExceptionHandler {
                 fieldErrors.putIfAbsent(error.getField(), error.getDefaultMessage())
         );
         return error(HttpStatus.BAD_REQUEST, "Request validation failed", request.getRequestURI(), fieldErrors);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleUnexpected(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        log.atError()
+                .setCause(exception)
+                .addKeyValue("layer", "APPLICATION")
+                .addKeyValue("event", "APPLICATION_ERROR")
+                .addKeyValue("exception", exception.getClass().getSimpleName())
+                .addKeyValue("errorMessage", exception.getMessage())
+                .addKeyValue("httpMethod", request.getMethod())
+                .addKeyValue("uri", request.getRequestURI())
+                .log("Unhandled application error");
+        return error(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                exception.getMessage(),
+                request.getRequestURI(),
+                Map.of()
+        );
     }
 
     private ResponseEntity<ApiErrorResponse> error(

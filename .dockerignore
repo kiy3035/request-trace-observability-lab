@@ -1,0 +1,9 @@
+.git
+.gradle
+.gradle-user-home
+.idea
+.tmp
+logs
+src
+*.md
+

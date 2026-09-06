@@ -71,7 +71,6 @@ public class ExecutionTimingAspect {
                     .addKeyValue("slow", slow)
                     .addKeyValue("success", success)
                     .addKeyValue("exception", failure == null ? null : failure.getClass().getSimpleName())
-                    .addKeyValue("thread", Thread.currentThread().getName())
                     .log("{} execution completed", layer);
             if ("SERVICE".equals(layer) && slow) {
                 log.atWarn()
@@ -81,7 +80,6 @@ public class ExecutionTimingAspect {
                         .addKeyValue("method", signature.getName())
                         .addKeyValue("elapsedMs", elapsedMs)
                         .addKeyValue("slow", true)
-                        .addKeyValue("thread", Thread.currentThread().getName())
                         .log("Slow service detected");
             }
         }
