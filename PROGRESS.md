@@ -17,7 +17,7 @@ Codex 작업이 끝날 때마다 이 파일을 갱신한다.
 
 ## 현재 단계
 
-Phase 1 - 기본 애플리케이션
+Phase 2 - HTTP Trace ID
 
 상태: PASS
 
@@ -73,6 +73,59 @@ docker compose -p request-trace-phase1-check down -v --remove-orphans
 다음 단계:
 
 - Phase 2 - HTTP Trace ID
+
+---
+
+### Phase 2 - HTTP Trace ID
+
+상태: PASS
+
+목표:
+
+요청별 UUID Trace ID를 MDC와 응답 Header에 연결하고 요청 종료 후 정리
+
+변경 파일:
+
+- `TraceIdFilter.java`
+- `TraceIdFilterTest.java`
+- `README.md`
+
+실행한 명령:
+
+```powershell
+.\gradlew.bat --no-daemon test --tests dev.requesttrace.observability.web.TraceIdFilterTest
+.\gradlew.bat --no-daemon clean build
+docker compose -p request-trace-phase2-check up -d --wait postgres
+java -jar build\libs\request-trace-observability-lab-0.0.1-SNAPSHOT.jar
+Invoke-WebRequest로 traceId 누락/정상/잘못된 Header 요청
+docker compose -p request-trace-phase2-check down -v --remove-orphans
+```
+
+검증:
+
+- build: PASS (`BUILD SUCCESSFUL`)
+- tests: PASS (TraceIdFilter 6 + Order API 6, failures 0)
+- runtime scenario: PASS (누락 시 생성, 정상 UUID 재사용, 잘못된 값 교체, 404 응답에도 Header 포함)
+
+실제 관측 결과:
+
+- 누락 Header 생성 traceId: `ab1a110d-c6ed-49c4-ba0f-4c7f37d7ef0e`
+- 정상 Header 재사용 traceId: `550e8400-e29b-41d4-a716-446655440000`
+- 잘못된 Header 교체 traceId: `be487aa0-3a9c-449b-b022-c355eff97ac4`
+- event: 요청마다 `HTTP request started`, `HTTP request completed` 로그 확인
+- Grafana/Loki 확인: NOT RUN (Phase 6 범위)
+
+비고:
+
+- MDC 정리는 정상 흐름과 ServletException 흐름을 모두 테스트했다.
+
+Blocker:
+
+- 없음
+
+다음 권장 단계:
+
+- Phase 3 - AOP 실행시간 측정
 
 ---
 
