@@ -21,7 +21,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 class TraceIdFilterTest {
 
-    private final TraceIdFilter filter = new TraceIdFilter(new SlowThresholdProperties(500, 500));
+    private final TraceIdFilter filter = new TraceIdFilter(new SlowThresholdProperties(500, 500, 200));
 
     @AfterEach
     void clearMdc() {

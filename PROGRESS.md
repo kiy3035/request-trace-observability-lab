@@ -17,7 +17,7 @@ Codex 작업이 끝날 때마다 이 파일을 갱신한다.
 
 ## 현재 단계
 
-Phase 3 - AOP 실행시간 측정
+Phase 4 - JPA/JDBC SQL 실행시간 측정
 
 상태: PASS
 
@@ -184,6 +184,65 @@ Blocker:
 다음 권장 단계:
 
 - Phase 4 - JPA/JDBC SQL 실행시간 측정
+
+---
+
+### Phase 4 - JPA/JDBC SQL 실행시간 측정
+
+상태: PASS
+
+목표:
+
+datasource-proxy로 실제 JDBC 완료시간을 측정하고 Slow SQL 판별
+
+변경 파일:
+
+- `DataSourceProxyConfiguration.java`
+- `SqlQueryLoggingListener.java`, `SqlQueryLoggingListenerTest.java`
+- `SlowSqlDemoRepository.java`
+- `DemoController.java`, `DemoService.java`
+- `OrderApiIntegrationTest.java`
+- `build.gradle`, `application.yml`, `README.md`
+
+실행한 명령:
+
+```powershell
+.\gradlew.bat --no-daemon test --tests dev.requesttrace.observability.config.SqlQueryLoggingListenerTest
+.\gradlew.bat --no-daemon clean build
+docker compose -p request-trace-phase4-check up -d --wait postgres
+java -jar build\libs\request-trace-observability-lab-0.0.1-SNAPSHOT.jar
+Invoke-WebRequest http://localhost:18080/api/demo/slow-sql?delayMs=300
+docker compose -p request-trace-phase4-check down -v --remove-orphans
+```
+
+검증:
+
+- build: PASS (`BUILD SUCCESSFUL`)
+- tests: PASS (전체 20 tests, failures 0)
+- runtime scenario: PASS (`pg_sleep(?)` 실제 JDBC 실행)
+
+실제 관측 결과:
+
+- traceId: `a907d75e-cd37-4330-a338-97da1e1ed5e2`
+- `SQL_EXECUTION`: `SELECT`, SQL `select pg_sleep(?)`, 302ms, `slow=true`, `success=true`
+- `SLOW_SQL`: 302ms
+- `SERVICE_END`: 323ms, `slow=false`
+- `REQUEST_END`: 392ms, HTTP 200, `slow=false`
+- Bind Parameter: 로그에 출력되지 않음
+- Grafana/Loki 확인: NOT RUN (Phase 6 범위)
+
+비고:
+
+- 첫 전체 테스트는 수동 DataSource 구성에 Testcontainers `@ServiceConnection` 정보가 적용되지 않아 7건 FAIL했다. Dynamic Property로 실제 컨테이너 연결 정보를 주입하도록 수정한 뒤 전체 20건을 재실행해 PASS했다.
+- SQL 문자열은 공백 정규화 후 2,000자로 제한한다.
+
+Blocker:
+
+- 없음
+
+다음 권장 단계:
+
+- Phase 5 - Async MDC 유실 및 해결
 
 ---
 
