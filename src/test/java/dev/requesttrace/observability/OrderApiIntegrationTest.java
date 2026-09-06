@@ -160,6 +160,17 @@ class OrderApiIntegrationTest {
         assertThat((String) keyValues(insertLog).get("sql")).doesNotContain("private-product-name");
     }
 
+    @Test
+    void tracesIntentionalApplicationError() throws Exception {
+        String traceId = UUID.randomUUID().toString();
+
+        mockMvc.perform(get("/api/demo/error")
+                        .header(TraceIdFilter.TRACE_ID_HEADER, traceId))
+                .andExpect(status().isInternalServerError())
+                .andExpect(header().string(TraceIdFilter.TRACE_ID_HEADER, traceId))
+                .andExpect(jsonPath("$.message").value("Intentional demo error"));
+    }
+
     private long createOrder(String productName, int quantity) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)

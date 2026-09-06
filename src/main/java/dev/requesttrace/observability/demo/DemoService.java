@@ -25,5 +25,9 @@ public class DemoService {
         slowSqlDemoRepository.sleep(delayMs);
         return delayMs;
     }
+
+    public void error() {
+        throw new IntentionalDemoException();
+    }
 }
 

@@ -2,21 +2,26 @@
 
 HTTP 요청 하나가 Controller, Service, 실제 JDBC SQL을 거쳐 응답되기까지 같은 `traceId`로 추적하고, Alloy, Loki, Grafana에서 지연과 오류를 분석하는 로컬 실험 프로젝트입니다.
 
-## Phase 1 실행
+## 로컬 전체 Stack 실행
 
 요구 사항:
 
 - Java 21
 - Docker Desktop
 
-PostgreSQL과 애플리케이션을 실행합니다.
+애플리케이션을 빌드한 뒤 PostgreSQL, App, Alloy, Loki, Grafana를 실행합니다.
 
 ```bash
-docker compose up -d postgres
-./gradlew bootRun
+./gradlew bootJar
+docker compose up -d --build
 ```
 
-Windows에서는 `./gradlew` 대신 `gradlew.bat`을 사용할 수 있습니다. 기본 DB 연결 값은 로컬 실험 전용이며 환경 변수 `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`로 덮어쓸 수 있습니다.
+Windows에서는 `./gradlew` 대신 `gradlew.bat`을 사용할 수 있습니다. 기본 DB/Grafana 계정은 로컬 실험 전용이며 환경 변수로 덮어쓸 수 있습니다.
+
+- App: <http://localhost:8080>
+- Grafana: <http://localhost:3000> (`admin` / `admin`)
+- Loki: <http://localhost:3100/ready>
+- Alloy: <http://localhost:12345>
 
 ```bash
 curl -i -X POST http://localhost:8080/api/orders \
@@ -56,6 +61,14 @@ MDC가 일반 Thread Pool에서 유실되는 경우와 `TaskDecorator`로 전파
 curl -i -X POST http://localhost:8080/api/demo/async/lost
 curl -i -X POST http://localhost:8080/api/demo/async/propagated
 ```
+
+의도적인 500 응답과 `APPLICATION_ERROR` 로그를 생성합니다.
+
+```bash
+curl -i http://localhost:8080/api/demo/error
+```
+
+로그는 `/var/log/app/application.json`에 JSON Lines 형식으로 기록되고 Alloy가 Loki로 보냅니다. Loki Label은 `application`, `environment`, `level`만 사용하며 `traceId`는 JSON Field로 유지합니다.
 
 ## 테스트
 

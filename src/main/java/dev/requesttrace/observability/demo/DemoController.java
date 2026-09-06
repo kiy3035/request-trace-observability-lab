@@ -46,6 +46,11 @@ public class DemoController {
         return asyncDemoService.propagated().join();
     }
 
+    @GetMapping("/error")
+    public void error() {
+        demoService.error();
+    }
+
     public record DelayResponse(long requestedDelayMs) {
     }
 }

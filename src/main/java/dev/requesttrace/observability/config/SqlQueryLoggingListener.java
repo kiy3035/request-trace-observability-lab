@@ -47,7 +47,6 @@ public class SqlQueryLoggingListener implements QueryExecutionListener {
                     .addKeyValue("slow", slow)
                     .addKeyValue("success", success)
                     .addKeyValue("exception", exception)
-                    .addKeyValue("thread", Thread.currentThread().getName())
                     .log("SQL execution completed");
             if (slow) {
                 log.atWarn()
@@ -59,7 +58,6 @@ public class SqlQueryLoggingListener implements QueryExecutionListener {
                         .addKeyValue("slow", true)
                         .addKeyValue("success", success)
                         .addKeyValue("exception", exception)
-                        .addKeyValue("thread", Thread.currentThread().getName())
                         .log("Slow SQL detected");
             }
         }

@@ -39,7 +39,6 @@ public class AsyncDemoService {
                 .addKeyValue("layer", "ASYNC")
                 .addKeyValue("event", "ASYNC_CALLER")
                 .addKeyValue("mode", mode)
-                .addKeyValue("thread", Thread.currentThread().getName())
                 .log("Async task submitted");
 
         return CompletableFuture.supplyAsync(() -> {
@@ -50,7 +49,6 @@ public class AsyncDemoService {
                     .addKeyValue("mode", mode)
                     .addKeyValue("callerTraceId", callerTraceId)
                     .addKeyValue("workerTraceId", workerTraceId)
-                    .addKeyValue("thread", Thread.currentThread().getName())
                     .log("Async task executed");
             return new AsyncTraceResponse(mode, callerTraceId, workerTraceId, Thread.currentThread().getName());
         }, executor);
