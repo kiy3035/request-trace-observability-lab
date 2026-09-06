@@ -17,7 +17,7 @@ Codex 작업이 끝날 때마다 이 파일을 갱신한다.
 
 ## 현재 단계
 
-Phase 7 - Grafana Troubleshooting Dashboard
+Phase 8 - 문서화 및 실험 결과 정리
 
 상태: PASS
 
@@ -336,7 +336,7 @@ Invoke-RestMethod로 Loki query_range/labels 및 Grafana Datasource health 호�
 - build: PASS (`BUILD SUCCESSFUL`)
 - tests: PASS (전체 25 tests, failures 0)
 - compose config: PASS
-- runtime scenario: PASS (app/postgres/alloy/loki/grafana 모두 healthy)
+- runtime scenario: PASS (5개 서비스 모두 running, healthcheck가 있는 app/postgres는 healthy)
 - Loki ingestion/query: PASS
 - Grafana datasource: PASS (`status=OK`)
 
@@ -422,6 +422,73 @@ Blocker:
 다음 권장 단계:
 
 - Phase 8 - 문서화 및 실험 결과 정리
+
+---
+
+### Phase 8 - 문서화 및 실험 결과 정리
+
+상태: PASS
+
+목표:
+
+아키텍처, 설계 선택, 재현 절차, 실제 측정값과 Grafana 결과 화면 정리
+
+변경 파일:
+
+- `README.md`
+- `docs/architecture.md`
+- `docs/experiment-guide.md`
+- `docs/measurement-results.md`
+- `docs/images/grafana-dashboard.png`
+- `docs/images/grafana-trace-flow.png`
+- `PROGRESS.md`
+
+실행한 명령:
+
+```powershell
+ConvertFrom-Json으로 Dashboard JSON 검증
+Test-Path로 문서와 이미지 링크 대상 검증
+docker compose config --quiet
+docker compose -p request-trace-phase6-check ps --format json
+.\gradlew.bat --no-daemon clean build
+Test XML 6개를 파싱해 전체 test 결과 합산
+git diff --check
+docker compose -p request-trace-phase6-check down -v --remove-orphans
+```
+
+검증:
+
+- build: PASS (`BUILD SUCCESSFUL`)
+- tests: PASS (전체 25 tests, failures 0, errors 0, skipped 0)
+- compose config: PASS
+- runtime stack: PASS (5개 서비스 running, app/postgres healthy)
+- dashboard JSON: PASS (`Request Trace Troubleshooting`, 8 panels, 3 variables)
+- 문서 및 이미지 링크 대상: PASS
+- Grafana 실제 화면 캡처: PASS
+
+실제 관측 결과:
+
+- 전체 Dashboard 캡처: `docs/images/grafana-dashboard.png` (29,398 bytes)
+- 선택 trace flow 캡처: `docs/images/grafana-trace-flow.png` (56,096 bytes)
+- 캡처 시점 Dashboard: 전체 HTTP 요청 151, Error 2, Slow Request `No data`
+- 선택 traceId: `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa`
+- 선택 Flow: `REQUEST_START → SQL_EXECUTION → SERVICE_END → CONTROLLER_END → REQUEST_END`
+- Compose 상태: alloy/grafana/loki running, app/postgres healthy
+
+비고:
+
+- 전체 HTTP 요청에는 5초 주기의 `/actuator/health` 컨테이너 healthcheck가 포함된다.
+- Grafana 캡처와 Phase 7의 Loki API 조회 시점에 최근 30분 Slow Request가 없어서 `No data`/0 series로 표시됐다.
+- 측정 문서는 Phase 1~7에서 직접 실행한 값만 옮겼다.
+- 검증 후 `request-trace-phase6-check` 전용 컨테이너 5개, volume 5개, network 1개를 정리했다.
+
+Blocker:
+
+- 없음
+
+다음 권장 단계:
+
+- 전체 Phase 완료
 
 ---
 

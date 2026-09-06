@@ -2,6 +2,13 @@
 
 HTTP 요청 하나가 Controller, Service, 실제 JDBC SQL을 거쳐 응답되기까지 같은 `traceId`로 추적하고, Alloy, Loki, Grafana에서 지연과 오류를 분석하는 로컬 실험 프로젝트입니다.
 
+![Grafana Troubleshooting Dashboard](docs/images/grafana-dashboard.png)
+
+```text
+HTTP Request → Filter/MDC → Controller AOP → Service AOP → JPA
+             → datasource-proxy → PostgreSQL → JSON Log → Alloy → Loki → Grafana
+```
+
 ## 로컬 전체 Stack 실행
 
 요구 사항:
@@ -12,8 +19,8 @@ HTTP 요청 하나가 Controller, Service, 실제 JDBC SQL을 거쳐 응답되�
 애플리케이션을 빌드한 뒤 PostgreSQL, App, Alloy, Loki, Grafana를 실행합니다.
 
 ```bash
-./gradlew bootJar
-docker compose up -d --build
+./gradlew clean build
+docker compose up -d --build --wait
 ```
 
 Windows에서는 `./gradlew` 대신 `gradlew.bat`을 사용할 수 있습니다. 기본 DB/Grafana 계정은 로컬 실험 전용이며 환경 변수로 덮어쓸 수 있습니다.
@@ -80,4 +87,11 @@ curl -i http://localhost:8080/api/demo/error
 ./gradlew clean test
 ./gradlew build
 ```
+
+## 상세 문서
+
+- [전체 아키텍처와 설계 선택](docs/architecture.md)
+- [시나리오별 실험 가이드](docs/experiment-guide.md)
+- [실제 측정 결과](docs/measurement-results.md)
+- [Phase별 실행 이력](PROGRESS.md)
 
