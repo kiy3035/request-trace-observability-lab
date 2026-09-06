@@ -17,7 +17,7 @@ Codex 작업이 끝날 때마다 이 파일을 갱신한다.
 
 ## 현재 단계
 
-Phase 2 - HTTP Trace ID
+Phase 3 - AOP 실행시간 측정
 
 상태: PASS
 
@@ -126,6 +126,64 @@ Blocker:
 다음 권장 단계:
 
 - Phase 3 - AOP 실행시간 측정
+
+---
+
+### Phase 3 - AOP 실행시간 측정
+
+상태: PASS
+
+목표:
+
+Controller와 Service 실행시간을 측정하고 설정값으로 Slow Service/Request 판별
+
+변경 파일:
+
+- `ExecutionTimingAspect.java`, `ExecutionTimingAspectTest.java`
+- `SlowThresholdProperties.java`
+- `DemoController.java`, `DemoService.java`
+- `TraceIdFilter.java`, `application.yml`
+- `build.gradle`, `README.md`
+
+실행한 명령:
+
+```powershell
+.\gradlew.bat --no-daemon test --tests dev.requesttrace.observability.aop.ExecutionTimingAspectTest --tests dev.requesttrace.observability.web.TraceIdFilterTest
+.\gradlew.bat --no-daemon clean build
+docker compose -p request-trace-phase3-check up -d --wait postgres
+java -jar build\libs\request-trace-observability-lab-0.0.1-SNAPSHOT.jar
+Invoke-WebRequest http://localhost:18080/api/demo/slow-service?delayMs=700
+docker compose -p request-trace-phase3-check down -v --remove-orphans
+```
+
+검증:
+
+- build: PASS (`BUILD SUCCESSFUL`)
+- tests: PASS (전체 15 tests, failures 0)
+- runtime scenario: PASS (700ms Slow Service와 Slow Request 재현)
+
+실제 관측 결과:
+
+- traceId: `9c644e13-f47b-4b8a-b3f5-a265f1a36d5f`
+- `SERVICE_END`: 713ms, `slow=true`
+- `SLOW_SERVICE`: 713ms
+- `CONTROLLER_END`: 745ms
+- `REQUEST_END`: 757ms, `slow=true`, HTTP 200
+- `SLOW_REQUEST`: 757ms
+- Grafana/Loki 확인: NOT RUN (Phase 6 범위)
+
+비고:
+
+- 첫 AOP 테스트 실행은 테스트 로그 Map 헬퍼가 null 값을 처리하지 못해 2건 FAIL했다. 헬퍼 수정 후 대상 테스트와 전체 빌드를 재실행해 PASS했다.
+- AOP는 traceId를 만들지 않고 Filter가 설정한 MDC를 사용한다.
+
+Blocker:
+
+- 없음
+
+다음 권장 단계:
+
+- Phase 4 - JPA/JDBC SQL 실행시간 측정
 
 ---
 

@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import dev.requesttrace.observability.config.SlowThresholdProperties;
 import jakarta.servlet.ServletException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,7 +21,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 class TraceIdFilterTest {
 
-    private final TraceIdFilter filter = new TraceIdFilter();
+    private final TraceIdFilter filter = new TraceIdFilter(new SlowThresholdProperties(500, 500));
 
     @AfterEach
     void clearMdc() {

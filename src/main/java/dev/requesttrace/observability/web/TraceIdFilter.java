@@ -1,5 +1,6 @@
 package dev.requesttrace.observability.web;
 
+import dev.requesttrace.observability.config.SlowThresholdProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,12 @@ public class TraceIdFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(TraceIdFilter.class);
 
+    private final SlowThresholdProperties thresholds;
+
+    public TraceIdFilter(SlowThresholdProperties thresholds) {
+        this.thresholds = thresholds;
+    }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -45,6 +52,7 @@ public class TraceIdFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             long elapsedMs = (System.nanoTime() - startedAt) / 1_000_000;
+            boolean slow = elapsedMs >= thresholds.httpMs();
             log.atInfo()
                     .addKeyValue("layer", "HTTP")
                     .addKeyValue("event", "REQUEST_END")
@@ -52,7 +60,19 @@ public class TraceIdFilter extends OncePerRequestFilter {
                     .addKeyValue("uri", request.getRequestURI())
                     .addKeyValue("status", response.getStatus())
                     .addKeyValue("elapsedMs", elapsedMs)
+                    .addKeyValue("slow", slow)
                     .log("HTTP request completed");
+            if (slow) {
+                log.atWarn()
+                        .addKeyValue("layer", "HTTP")
+                        .addKeyValue("event", "SLOW_REQUEST")
+                        .addKeyValue("httpMethod", request.getMethod())
+                        .addKeyValue("uri", request.getRequestURI())
+                        .addKeyValue("status", response.getStatus())
+                        .addKeyValue("elapsedMs", elapsedMs)
+                        .addKeyValue("slow", true)
+                        .log("Slow HTTP request detected");
+            }
             MDC.remove(TRACE_ID_MDC_KEY);
         }
     }
