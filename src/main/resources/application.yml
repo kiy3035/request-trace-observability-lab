@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: request-trace-observability-lab
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:request_trace}
+    username: ${DB_USER:request_trace}
+    password: ${DB_PASSWORD:request_trace_local}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
