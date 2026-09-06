@@ -14,3 +14,8 @@ spring:
         jdbc:
           time_zone: UTC
 
+observability:
+  slow:
+    http-ms: ${SLOW_HTTP_MS:500}
+    service-ms: ${SLOW_SERVICE_MS:500}
+

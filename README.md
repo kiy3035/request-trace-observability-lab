@@ -38,6 +38,12 @@ curl -i http://localhost:8080/api/orders/1 \
   -H "X-Trace-Id: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
+Controller와 Service 실행시간은 AOP가 기록합니다. 기본 Slow HTTP/Service 기준은 500ms이며 `SLOW_HTTP_MS`, `SLOW_SERVICE_MS`로 바꿀 수 있습니다.
+
+```bash
+curl -i "http://localhost:8080/api/demo/slow-service?delayMs=700"
+```
+
 ## 테스트
 
 통합 테스트는 Testcontainers로 실제 PostgreSQL 컨테이너를 실행합니다.
